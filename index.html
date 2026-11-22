@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daily Work Report Generator</title>
+<meta name="description" content="Log your team's daily work and attendance, then share it as a clean image on WhatsApp.">
+<meta name="theme-color" content="#1e3a8a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef2f7; --card:#fff; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+  --brand:#1e3a8a; --brand2:#0f766e; --ok:#15803d; --okbg:#dcfce7; --bad:#b91c1c; --badbg:#fee2e2;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Hind Siliguri","Noto Sans Bengali",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45;padding-bottom:110px}
+button,input,textarea,select{font:inherit;color:inherit}
+.appbar{background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff;padding:18px 16px 54px}
+.appbar .wrap{max-width:860px;margin:0 auto}
+.appbar h1{margin:0;font-size:22px;font-weight:700;letter-spacing:.2px}
+.appbar p{margin:2px 0 0;opacity:.85;font-size:14px}
+.wrap{max-width:860px;margin:0 auto;padding:0 14px}
+.tabs{display:flex;gap:6px;background:#fff;border-radius:999px;padding:5px;margin:-36px auto 16px;max-width:860px;box-shadow:0 6px 20px rgba(15,23,42,.10);position:sticky;top:8px;z-index:20}
+.tabs button{flex:1;border:0;background:transparent;padding:9px 6px;border-radius:999px;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted);white-space:nowrap}
+.tabs button.on{background:var(--brand);color:#fff}
+.panel{display:none}.panel.on{display:block}
+.card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 1px 3px rgba(15,23,42,.06);margin-bottom:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grow{flex:1 1 200px}
+label.l{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:0 0 4px}
+input[type=text],input[type=date],textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;background:#fff;outline:none;transition:border-color .15s}
+input:focus,textarea:focus{border-color:#3b82f6}
+textarea{resize:vertical;min-height:62px}
+.btn{border:0;border-radius:10px;padding:9px 14px;font-weight:600;cursor:pointer;background:#e2e8f0;color:var(--ink);display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:14.5px}
+.btn:hover{filter:brightness(.96)}
+.btn.pri{background:var(--brand);color:#fff}
+.btn.green{background:#16a34a;color:#fff}
+.btn.wa{background:#25d366;color:#fff}
+.btn.ghost{background:transparent;border:1.5px solid var(--line)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn.danger{background:var(--badbg);color:var(--bad)}
+.datebar{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.datebar .day{font-weight:700;color:var(--brand);font-size:15px;padding-bottom:9px}
+.stats{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{background:#f1f5f9;border-radius:999px;padding:4px 12px;font-size:13.5px;font-weight:600}
+.chip.ok{background:var(--okbg);color:var(--ok)}.chip.bad{background:var(--badbg);color:var(--bad)}
+.emp{background:#fff;border-radius:var(--radius);padding:14px;margin-bottom:12px;border-left:5px solid #22c55e;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+.emp.absent{border-left-color:#ef4444;background:#fffafa}
+.emp .top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.emp .sl{width:30px;height:30px;border-radius:50%;background:#eef2ff;color:var(--brand);display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.emp .nm{font-weight:700;font-size:17px;line-height:1.2}
+.emp .pin{font-size:12.5px;color:var(--muted)}
+.seg{margin-left:auto;display:flex;background:#f1f5f9;border-radius:999px;padding:3px;flex:none}
+.seg button{border:0;background:transparent;padding:5px 11px;border-radius:999px;font-weight:600;font-size:13px;cursor:pointer;color:var(--muted)}
+.seg button.p.on{background:#16a34a;color:#fff}
+.seg button.a.on{background:#dc2626;color:#fff}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fields .full{grid-column:1/-1}
+@media (max-width:620px){.fields{grid-template-columns:1fr}}
+.lblrow{display:flex;justify-content:space-between;align-items:center}
+.link{border:0;background:none;color:#2563eb;font-size:12.5px;font-weight:600;cursor:pointer;padding:0 0 4px}
+.emp.absent .work{display:none}
+.emp .reasonwrap{display:none}
+.emp.absent .reasonwrap{display:block}
+.invalid{border-color:#ef4444!important;background:#fff5f5!important}
+.sticky{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 14px calc(12px + env(safe-area-inset-bottom));z-index:30}
+.sticky .wrap{display:flex;gap:10px}
+.sticky .btn{flex:1;justify-content:center;padding:13px;font-size:16px}
+.tlist .trow{display:grid;grid-template-columns:90px 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.tlist .trow:last-child{border-bottom:0}
+.tact{display:flex;gap:4px}
+.hist{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.hist:last-child{border-bottom:0}
+.hist .d{font-weight:700}
+.hist .meta{font-size:13px;color:var(--muted)}
+.badge{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px}
+.badge.done{background:var(--okbg);color:var(--ok)}.badge.draft{background:#fef9c3;color:#a16207}
+.muted{color:var(--muted);font-size:13.5px}
+h2{font-size:17px;margin:0 0 12px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:14.5px;cursor:pointer}
+.check input{margin-top:5px;width:17px;height:17px}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.on{display:flex}
+.mbox{background:#fff;border-radius:18px;max-width:760px;width:100%;max-height:94vh;display:flex;flex-direction:column;overflow:hidden}
+.mhead{padding:14px 16px;display:flex;align-items:center;border-bottom:1px solid var(--line)}
+.mhead b{font-size:17px}
+.mhead button{margin-left:auto}
+.preview{overflow:auto;background:#f1f5f9;padding:12px;flex:1}
+.preview img{width:100%;display:block;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,.12)}
+.mact{padding:12px 16px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;border-top:1px solid var(--line)}
+.mact .btn{justify-content:center;padding:11px 6px;font-size:14px}
+@media (max-width:560px){.mact{grid-template-columns:1fr 1fr}}
+.mhint{padding:0 16px 14px;font-size:12.5px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;padding:26px 10px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header class="appbar"><div class="wrap">
+  <h1>📋 Daily Work Report</h1>
+  <p id="appSub">প্রতিদিনের কাজের আপডেট — লিখুন, ছবি বানান, পাঠান</p>
+</div></header>
+
+<nav class="tabs" id="tabs">
+  <button data-t="report" class="on">📝 রিপোর্ট</button>
+  <button data-t="team">👥 টিম</button>
+  <button data-t="history">📚 History</button>
+  <button data-t="settings">⚙️ সেটিংস</button>
+</nav>
+
+<main class="wrap">
+  <!-- REPORT -->
+  <section class="panel on" id="p-report">
+    <div class="card">
+      <div class="datebar">
+        <div style="flex:0 0 190px"><label class="l">তারিখ (Date)</label><input type="date" id="date"></div>
+        <div class="day" id="dayName"></div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn sm ghost" id="allPresent">✅ সবাই Present</button>
+        <button class="btn sm ghost" id="copyPrev">↩️ আগের রিপোর্টের Target আনুন</button>
+        <button class="btn sm ghost" id="clearDay">🧹 এই দিনের ডাটা মুছুন</button>
+      </div>
+      <div class="stats" id="stats"></div>
+    </div>
+
+    <div id="empList"></div>
+
+    <div class="card">
+      <label class="l">📌 Summary (সারসংক্ষেপ)</label>
+      <textarea id="summary" rows="4" placeholder="যেমন: Class 8 Science Progressive Batch Final করে ESM এ পাঠানো হয়েছে..."></textarea>
+    </div>
+  </section>
+
+  <!-- TEAM -->
+  <section class="panel" id="p-team">
+    <div class="card">
+      <h2>👥 টিম মেম্বার</h2>
+      <div class="tlist" id="teamList"></div>
+    </div>
+    <div class="card">
+      <h2>➕ নতুন মেম্বার যোগ করুন</h2>
+      <div class="row">
+        <div style="flex:0 0 110px"><label class="l">Pin</label><input type="text" id="newPin" inputmode="numeric" placeholder="1234"></div>
+        <div class="grow"><label class="l">নাম</label><input type="text" id="newName" placeholder="নাম লিখুন"></div>
+        <button class="btn pri" id="addEmp" style="align-self:flex-end">যোগ করুন</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="panel" id="p-history">
+    <div class="card">
+      <h2>📚 আগের রিপোর্টসমূহ</h2>
+      <div id="histList"></div>
+    </div>
+    <div class="card">
+      <h2>💾 Backup</h2>
+      <p class="muted" style="margin-top:-6px">সব ডাটা এই ব্রাউজারেই সেভ থাকে। অন্য ফোন/কম্পিউটারে নিতে বা নিরাপদ রাখতে Backup নিন।</p>
+      <div class="row">
+        <button class="btn" id="exportBtn">⬇️ Backup Download</button>
+        <button class="btn" id="exportCopy">📋 Backup Copy</button>
+        <label class="btn" style="cursor:pointer">⬆️ Backup Import<input type="file" id="importFile" accept=".json,application/json" hidden></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="panel" id="p-settings">
+    <div class="card">
+      <h2>⚙️ রিপোর্ট সেটিংস</h2>
+      <div style="display:grid;gap:12px">
+        <div><label class="l">রিপোর্টের শিরোনাম</label><input type="text" id="sTitle"></div>
+        <div><label class="l">টিম / বিভাগের নাম</label><input type="text" id="sTeam"></div>
+        <div><label class="l">Prepared by (যিনি পাঠাচ্ছেন)</label><input type="text" id="sBy" placeholder="আপনার নাম"></div>
+        <label class="check"><input type="checkbox" id="sBullets"> <span>ছবিতে কমা (,) দিয়ে লেখা কাজগুলো আলাদা লাইনে বুলেট (•) আকারে দেখাবে</span></label>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="sticky"><div class="wrap">
+  <button class="btn green" id="submitBtn">✅ Submit করে ছবি তৈরি করুন</button>
+</div></div>
+
+<div class="modal" id="modal">
+  <div class="mbox">
+    <div class="mhead"><b>🎉 রিপোর্ট তৈরি হয়েছে</b><button class="btn sm ghost" id="mClose">✕ বন্ধ</button></div>
+    <div class="preview"><img id="outImg" alt="Daily report image"></div>
+    <div class="mact">
+      <button class="btn pri" id="mSave">💾 Save</button>
+      <button class="btn" id="mCopy">🖼️ Copy ছবি</button>
+      <a class="btn wa" id="mWa" href="https://wa.me/" target="_blank" rel="noopener">📲 WhatsApp</a>
+      <button class="btn" id="mText">📝 Copy Text</button>
+    </div>
+    <div class="mhint" id="mHint">টিপস: “Copy ছবি” চেপে WhatsApp-এ Paste করুন, অথবা Save করে গ্যালারি থেকে পাঠান। ছবির উপর long-press / right-click করেও Save/Copy করা যায়।</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+const KEY='dailyWorkReport_v1';
+const BN_DAYS=['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'];
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function todayISO(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function fmt(iso){const [y,m,d]=iso.split('-');return d+'/'+m+'/'+y;}
+function dayIdx(iso){const [y,m,d]=iso.split('-').map(Number);return new Date(y,m-1,d).getDay();}
+const dayBn=iso=>BN_DAYS[dayIdx(iso)];
+const dayEn=iso=>['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dayIdx(iso)];
+
+function seed(){
+  const people=[['3315','Sumon'],['8873','Iran'],['7096','Rayhan'],['9541','Saiful'],['9754','Abir'],['9985','Rakibul']];
+  const roster=people.map(([pin,name])=>({id:uid(),pin,name}));
+  const E=(st,t,a,r)=>({status:st,target:t||'',achieve:a||'',reason:r||'',remarks:''});
+  const entries={};
+  const data=[
+    E('present','Team Management, Check all Files, Teacher Management, Contact with ESM','Team Management, Check all Files, Teacher Management, Contact with ESM'),
+    E('present','Class 6 progressive subject final science correction, class 7 math olympiad correction','Class 6 progressive subject final science correction, class 7 math olympiad correction'),
+    E('absent','','','sick'),
+    E('present','Math olympiad class 6, English version solve sheet ready, class 6 science progressive batch correction and upload','Class 5 Math 02 correction and permission, Class 8 Chapterwise progressive Batch Math 10 and 11 correction, upload and permission'),
+    E('present','Cadet GK subject final question Type, Class 7 MCQ and class 8 ICT mcq correction','Cadet GK subject final question Type, Class 7 MCQ and class 8 ICT mcq correction'),
+    E('present','Class 8 Math 04 correction and send to ESM, Cadet Math 04 correction and GK 04 correction','Class 8 Math 04 correction and send to ESM, Cadet Math 04 correction and GK 04 correction')
+  ];
+  roster.forEach((p,i)=>entries[p.id]=data[i]);
+  return {
+    settings:{title:'Daily কাজের Report (5 to 8)',team:'Team Member',by:'',bullets:true},
+    roster,
+    reports:{'2026-11-01':{entries,submitted:true,summary:'Class 8, Subject Final Science Progressive Batch Final করে ESM এ পাঠানো হয়েছে। Class 5, Math 03 Final করে ESM এ পাঠানো হয়েছে। Class 6, Science Subject Final correction করে Upload দেওয়া হয়েছে। Math olympiad Class 7 (A+B+C+D) set correction চলছে, ইনশাল্লাহ আগামীকাল ৪ সেট Final করা হবে।'}}
+  };
+}
+function load(){try{const j=localStorage.getItem(KEY);if(j){const o=JSON.parse(j);if(o&&o.roster&&o.reports&&o.settings)return o;}}catch(e){}return seed();}
+let S=load();
+let saveT=null;
+function persist(now){clearTimeout(saveT);const f=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};now?f():saveT=setTimeout(f,300);}
+
+let curDate=todayISO();
+const blankEntry=()=>({status:'present',target:'',achieve:'',reason:'',remarks:''});
+function getRep(d){return S.reports[d]||{entries:{},summary:'',submitted:false};}
+function ensureRep(d){if(!S.reports[d])S.reports[d]={entries:{},summary:'',submitted:false};return S.reports[d];}
+function entryOf(rep,id){return rep.entries[id]||blankEntry();}
+function ensureEntry(id){const r=ensureRep(curDate);if(!r.entries[id])r.entries[id]=blankEntry();return r.entries[id];}
+
+function toast(msg,ms){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),ms||2600);}
+
+/* ---------- Tabs ---------- */
+$('#tabs').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+b.dataset.t));
+  $('.sticky').style.display=b.dataset.t==='report'?'':'none';
+  if(b.dataset.t==='history')renderHistory();
+  if(b.dataset.t==='team')renderTeam();
+  if(b.dataset.t==='report')renderReport();
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+function goTab(t){document.querySelector('#tabs button[data-t="'+t+'"]').click();}
+
+/* ---------- Report ---------- */
+function renderStats(){
+  const rep=getRep(curDate);const n=S.roster.length;
+  let a=0;S.roster.forEach(p=>{if(entryOf(rep,p.id).status==='absent')a++;});
+  $('#stats').innerHTML=`<span class="chip">👥 মোট: ${n}</span><span class="chip ok">✅ Present: ${n-a}</span><span class="chip bad">❌ Absent: ${a}</span>${rep.submitted?'<span class="chip ok">✔ Submitted</span>':''}`;
+}
+function renderReport(){
+  $('#date').value=curDate;
+  $('#dayName').textContent=dayBn(curDate)+' • '+fmt(curDate);
+  const rep=getRep(curDate);
+  if(!S.roster.length){$('#empList').innerHTML='<div class="card empty">কোনো টিম মেম্বার নেই। <br><button class="btn pri" style="margin-top:10px" id="goTeam">👥 টিম মেম্বার যোগ করুন</button></div>';$('#goTeam').onclick=()=>goTab('team');}
+  else $('#empList').innerHTML=S.roster.map((p,i)=>{
+    const e=entryOf(rep,p.id);const ab=e.status==='absent';
+    return `<div class="emp ${ab?'absent':''}" data-id="${p.id}">
+      <div class="top"><div class="sl">${i+1}</div><div><div class="nm">${esc(p.name)}</div><div class="pin">Pin: ${esc(p.pin)}</div></div>
+        <div class="seg"><button class="p ${ab?'':'on'}" data-st="present">Present</button><button class="a ${ab?'on':''}" data-st="absent">Absent</button></div></div>
+      <div class="fields">
+        <div class="work"><label class="l">🎯 Target (লক্ষ্য)</label><textarea data-f="target" rows="2" placeholder="আজকের টার্গেট">${esc(e.target)}</textarea></div>
+        <div class="work"><div class="lblrow"><label class="l">✔️ Today Achieve (অর্জন)</label><button class="link" data-same>= Target</button></div><textarea data-f="achieve" rows="2" placeholder="আজ যা করা হয়েছে">${esc(e.achieve)}</textarea></div>
+        <div class="reasonwrap full"><label class="l">ℹ️ অনুপস্থিতির কারণ (Reason) *</label><input type="text" data-f="reason" placeholder="যেমন: sick, ছুটি, পারিবারিক কারণ" value="${esc(e.reason)}"></div>
+        <div class="full"><label class="l">📝 Remarks (মন্তব্য — ঐচ্ছিক)</label><input type="text" data-f="remarks" placeholder="অতিরিক্ত মন্তব্য" value="${esc(e.remarks)}"></div>
+      </div></div>`;
+  }).join('');
+  $('#summary').value=rep.summary||'';
+  renderStats();
+}
+$('#empList').addEventListener('input',e=>{
+  const f=e.target.dataset.f;if(!f)return;
+  const id=e.target.closest('.emp').dataset.id;
+  ensureEntry(id)[f]=e.target.value;e.target.classList.remove('invalid');persist();
+});
+$('#empList').addEventListener('click',e=>{
+  const card=e.target.closest('.emp');if(!card)return;const id=card.dataset.id;
+  const st=e.target.closest('[data-st]');
+  if(st){const en=ensureEntry(id);en.status=st.dataset.st;card.classList.toggle('absent',en.status==='absent');
+    card.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b===st));persist();renderStats();
+    if(en.status==='absent'){const r=card.querySelector('[data-f=reason]');setTimeout(()=>r.focus(),50);}return;}
+  if(e.target.closest('[data-same]')){const en=ensureEntry(id);en.achieve=en.target;card.querySelector('[data-f=achieve]').value=en.target;persist();}
+});
+$('#summary').addEventListener('input',e=>{ensureRep(curDate).summary=e.target.value;persist();});
+$('#date').addEventListener('change',e=>{if(e.target.value){curDate=e.target.value;renderReport();}});
+$('#allPresent').onclick=()=>{S.roster.forEach(p=>ensureEntry(p.id).status='present');persist();renderReport();toast('সবাই Present করা হয়েছে');};
+$('#copyPrev').onclick=()=>{
+  const prev=Object.keys(S.reports).filter(d=>d<curDate).sort().pop();
+  if(!prev){toast('আগের কোনো রিপোর্ট পাওয়া যায়নি');return;}
+  const pr=S.reports[prev];let c=0;
+  S.roster.forEach(p=>{const pe=pr.entries[p.id];if(pe&&pe.target){const en=ensureEntry(p.id);if(!en.target){en.target=pe.target;c++;}}});
+  persist();renderReport();toast(fmt(prev)+' থেকে '+c+' জনের Target আনা হয়েছে');
+};
+$('#clearDay').onclick=function(){
+  if(this.dataset.arm){delete S.reports[curDate];persist(true);renderReport();this.textContent='🧹 এই দিনের ডাটা মুছুন';delete this.dataset.arm;toast('মুছে ফেলা হয়েছে');return;}
+  this.dataset.arm='1';this.textContent='⚠️ নিশ্চিত? আবার চাপুন';setTimeout(()=>{if(this.dataset.arm){delete this.dataset.arm;this.textContent='🧹 এই দিনের ডাটা মুছুন';}},3500);
+};
+
+/* ---------- Team ---------- */
+function renderTeam(){
+  $('#teamList').innerHTML=S.roster.length?S.roster.map((p,i)=>`<div class="trow" data-id="${p.id}">
+    <input type="text" data-k="pin" value="${esc(p.pin)}" inputmode="numeric" aria-label="Pin">
+    <input type="text" data-k="name" value="${esc(p.name)}" aria-label="Name">
+    <div class="tact"><button class="btn sm ghost" data-mv="-1" ${i===0?'disabled':''} title="উপরে">↑</button><button class="btn sm ghost" data-mv="1" ${i===S.roster.length-1?'disabled':''} title="নিচে">↓</button><button class="btn sm danger" data-del title="মুছুন">🗑</button></div></div>`).join('')
+    :'<div class="empty">এখনো কোনো মেম্বার নেই</div>';
+}
+$('#teamList').addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;const p=S.roster.find(x=>x.id===e.target.closest('.trow').dataset.id);p[k]=e.target.value;persist();});
+$('#teamList').addEventListener('click',e=>{
+  const row=e.target.closest('.trow');if(!row)return;const i=S.roster.findIndex(x=>x.id===row.dataset.id);
+  const mv=e.target.closest('[data-mv]');
+  if(mv){const j=i+Number(mv.dataset.mv);[S.roster[i],S.roster[j]]=[S.roster[j],S.roster[i]];persist();renderTeam();return;}
+  const del=e.target.closest('[data-del]');
+  if(del){if(!del.dataset.arm){del.dataset.arm=1;del.textContent='নিশ্চিত?';setTimeout(()=>{if(del.isConnected){delete del.dataset.arm;del.textContent='🗑';}},3000);return;}
+    S.roster.splice(i,1);persist();renderTeam();toast('মেম্বার মুছে ফেলা হয়েছে');}
+});
+$('#addEmp').onclick=()=>{
+  const pin=$('#newPin').value.trim(),name=$('#newName').value.trim();
+  if(!name){$('#newName').classList.add('invalid');toast('নাম লিখুন');return;}
+  S.roster.push({id:uid(),pin,name});persist();$('#newPin').value='';$('#newName').value='';$('#newName').classList.remove('invalid');renderTeam();toast(name+' যোগ হয়েছে');
+};
+
+/* ---------- History ---------- */
+function hasContent(r){return r.submitted||(r.summary||'').trim()||Object.values(r.entries).some(e=>e.target||e.achieve||e.reason||e.remarks||e.status==='absent');}
+function renderHistory(){
+  const ds=Object.keys(S.reports).filter(d=>hasContent(S.reports[d])).sort().reverse();
+  $('#histList').innerHTML=ds.length?ds.map(d=>{const r=S.reports[d];let a=0;S.roster.forEach(p=>{if(entryOf(r,p.id).status==='absent')a++;});
+    return `<div class="hist" data-d="${d}"><div style="flex:1"><div class="d">${fmt(d)} <span class="muted">${dayBn(d)}</span></div><div class="meta">Present ${S.roster.length-a} • Absent ${a}</div></div>
+    <span class="badge ${r.submitted?'done':'draft'}">${r.submitted?'Submitted':'Draft'}</span>
+    <button class="btn sm" data-open>খুলুন</button><button class="btn sm pri" data-img>🖼️</button></div>`;}).join('')
+    :'<div class="empty">এখনো কোনো রিপোর্ট নেই</div>';
+}
+$('#histList').addEventListener('click',e=>{
+  const h=e.target.closest('.hist');if(!h)return;
+  if(e.target.closest('[data-open]')){curDate=h.dataset.d;goTab('report');}
+  if(e.target.closest('[data-img]')){curDate=h.dataset.d;generate(true);}
+});
+
+/* ---------- Settings ---------- */
+function bindSettings(){
+  $('#sTitle').value=S.settings.title;$('#sTeam').value=S.settings.team;$('#sBy').value=S.settings.by;$('#sBullets').checked=!!S.settings.bullets;
+  $('#sTitle').oninput=e=>{S.settings.title=e.target.value;persist();};
+  $('#sTeam').oninput=e=>{S.settings.team=e.target.value;persist();};
+  $('#sBy').oninput=e=>{S.settings.by=e.target.value;persist();};
+  $('#sBullets').onchange=e=>{S.settings.bullets=e.target.checked;persist();};
+}
+
+/* ---------- Downloads helper ---------- */
+let dlNS;
+async function getDownloads(){
+  if(dlNS!==undefined)return dlNS;
+  try{dlNS=(window.claude&&typeof window.claude.use==='function')?await window.claude.use('downloads'):null;}catch(e){dlNS=null;}
+  return dlNS;
+}
+async function saveFile(filename,data){
+  const dl=await getDownloads();
+  if(dl){try{await dl.save({filename,data});toast('✅ Save হয়েছে');return true;}catch(err){if(err&&err.code==='declined'){toast('Save বাতিল করা হয়েছে');return false;}}}
+  try{const blob=data instanceof Blob?data:new Blob([data]);const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+    toast('Download শুরু হয়েছে — না হলে ছবির উপর long-press / right-click করে Save করুন',4200);return true;}catch(e){toast('ছবির উপর long-press / right-click করে Save করুন',4200);return false;}
+}
+
+/* ---------- Backup ---------- */
+$('#exportBtn').onclick=()=>saveFile('daily-report-backup-'+todayISO()+'.json',JSON.stringify(S,null,1));
+$('#exportCopy').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify(S));toast('Backup copy হয়েছে');}catch(e){toast('Copy করা যায়নি');}};
+$('#importFile').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{const o=JSON.parse(await f.text());if(!o.roster||!o.reports||!o.settings)throw 0;S=o;persist(true);bindSettings();renderHistory();toast('✅ Backup import হয়েছে');}
+  catch(err){toast('ফাইলটি সঠিক Backup নয়');}
+  e.target.value='';
+};
+
+/* ---------- Image rendering ---------- */
+const FONT='"Hind Siliguri","Noto Sans Bengali","Nirmala UI","Vrinda",sans-serif';
+const font=(w,s)=>w+' '+s+'px '+FONT;
+let fontsReady=null;
+function loadFonts(){
+  if(!fontsReady){fontsReady=(async()=>{try{await Promise.all([400,600,700].map(w=>document.fonts.load(font(w,20),'কাজের Report ১২৩')));}catch(e){}})();}
+  return fontsReady;
+}
+const seg=(window.Intl&&Intl.Segmenter)?new Intl.Segmenter('bn',{granularity:'grapheme'}):null;
+const graphemes=w=>seg?Array.from(seg.segment(w),s=>s.segment):Array.from(w);
+function wrap(m,text,maxW){
+  const words=text.split(/ +/);const out=[];let cur='';
+  for(const w of words){
+    const t=cur?cur+' '+w:w;
+    if(m.measureText(t).width<=maxW){cur=t;continue;}
+    if(cur)out.push(cur);
+    if(m.measureText(w).width<=maxW){cur=w;}
+    else{let piece='';for(const ch of graphemes(w)){if(piece&&m.measureText(piece+ch).width>maxW){out.push(piece);piece=ch;}else piece+=ch;}cur=piece;}
+  }
+  if(cur)out.push(cur);return out.length?out:[''];
+}
+function splitItems(t,bul){
+  t=(t||'').trim();if(!t)return [];
+  if(!bul)return t.split('\n').map(s=>s.trim()).filter(Boolean);
+  const parts=t.split(/\n|,\s+|،\s*/).map(s=>s.trim().replace(/[,.]$/,'')).filter(Boolean);
+  return parts.length>1?parts.map(p=>'• '+p):parts;
+}
+// items: [{t,f,c}] -> lines [{t,f,c,x}]
+function layoutCell(m,items,maxW){
+  const lines=[];
+  for(const it of items){
+    m.font=it.f;
+    for(const para of String(it.t).split('\n')){
+      if(para.startsWith('• ')){
+        const ind=m.measureText('• ').width;const ws=wrap(m,para.slice(2),maxW-ind);
+        ws.forEach((w,i)=>lines.push({t:i?w:'• '+w,f:it.f,c:it.c,x:i?ind:0}));
+      }else wrap(m,para,maxW).forEach(w=>lines.push({t:w,f:it.f,c:it.c,x:0}));
+    }
+  }
+  return lines;
+}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
+
+async function renderImage(date){
+  await loadFonts();
+  const rep=getRep(date),st=S.settings,bul=!!st.bullets;
+  const W=1400,P=40,IW=W-2*P,FB=19,LH=29,PX=12,PY=14,R=2;
+  const cols=[{k:'sl',w:56,h:'Sl',al:'c'},{k:'pin',w:86,h:'Pin',al:'c'},{k:'name',w:150,h:'Name'},{k:'target',w:370,h:'Target'},{k:'achieve',w:370,h:'Today Achieve'},{k:'status',w:108,h:'Status',al:'c'},{k:'reason',w:180,h:'Reason / Remarks'}];
+  const m=document.createElement('canvas').getContext('2d');
+  const C_INK='#0f172a',C_TXT='#1e293b',C_MUT='#94a3b8';
+  let absent=0;
+  const rows=S.roster.map((p,i)=>{
+    const e=entryOf(rep,p.id);const ab=e.status==='absent';if(ab)absent++;
+    const cell={};
+    const its=(t,f,c)=>{const a=splitItems(t,bul);return a.length?a.map(x=>({t:x,f,c})):[{t:'—',f,c:C_MUT}];};
+    cell.sl=layoutCell(m,[{t:String(i+1),f:font(600,FB),c:'#475569'}],cols[0].w-2*PX);
+    cell.pin=layoutCell(m,[{t:p.pin||'—',f:font(600,FB),c:'#475569'}],cols[1].w-2*PX);
+    cell.name=layoutCell(m,[{t:p.name||'—',f:font(700,FB),c:C_INK}],cols[2].w-2*PX);
+    cell.target=ab?layoutCell(m,[{t:'—',f:font(400,FB),c:C_MUT}],1):layoutCell(m,its(e.target,font(400,FB),C_TXT),cols[3].w-2*PX);
+    cell.achieve=ab?layoutCell(m,[{t:'—',f:font(400,FB),c:C_MUT}],1):layoutCell(m,its(e.achieve,font(400,FB),C_TXT),cols[4].w-2*PX);
+    cell.status=[{t:'',f:'',c:'',x:0}];
+    const ri=[];
+    if(e.reason&&e.reason.trim())ri.push({t:e.reason.trim(),f:font(600,FB),c:ab?'#b91c1c':C_TXT});
+    if(e.remarks&&e.remarks.trim())ri.push({t:e.remarks.trim(),f:font(400,FB-2),c:'#64748b'});
+    if(!ri.length)ri.push({t:'—',f:font(400,FB),c:C_MUT});
+    cell.reason=layoutCell(m,ri,cols[6].w-2*PX);
+    const n=Math.max(...cols.map(c=>cell[c.k].length));
+    return {cell,ab,h:Math.max(58,n*LH+2*PY)};
+  });
+  const n=S.roster.length,present=n-absent,rate=n?Math.round(present/n*100):0;
+
+  const HEAD=200,STAT_Y=160,STAT_H=88,TBL_Y=STAT_Y+STAT_H+30,THH=52;
+  const tblH=THH+rows.reduce((s,r)=>s+r.h,0);
+  m.font=font(400,FB);
+  const sumText=(rep.summary||'').trim();
+  const sumLines=sumText?layoutCell(m,[{t:sumText,f:font(400,FB+1),c:C_TXT}],IW-56):[];
+  const sumH=sumText?(22+36+sumLines.length*(LH+1)+20):0;
+  let H=TBL_Y+tblH+(sumText?28+sumH:0)+34+50;
+
+  const cv=document.createElement('canvas');cv.width=W*R;cv.height=H*R;
+  const ctx=cv.getContext('2d');ctx.scale(R,R);ctx.textBaseline='middle';
+  // bg
+  ctx.fillStyle='#f4f7fb';ctx.fillRect(0,0,W,H);
+  // header
+  const g=ctx.createLinearGradient(0,0,W,HEAD);g.addColorStop(0,'#1e3a8a');g.addColorStop(1,'#0f766e');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,HEAD);
+  ctx.globalAlpha=.08;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(W-120,-30,190,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(160,HEAD+40,120,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  const DBW=240,leftW=IW-DBW-30;
+  ctx.fillStyle='rgba(255,255,255,.82)';ctx.font=font(600,18);ctx.fillText(('📋 '+(st.team||'Daily Work Report')).slice(0,80),P,48);
+  let ts=38;const title=st.title||'Daily Work Report';
+  do{ctx.font=font(700,ts);if(ctx.measureText(title).width<=leftW)break;ts-=2;}while(ts>22);
+  ctx.fillStyle='#fff';ctx.fillText(title,P,94);
+  if(st.by){ctx.fillStyle='rgba(255,255,255,.8)';ctx.font=font(400,17);ctx.fillText('Prepared by: '+st.by,P,132);}
+  // date box
+  const dx=W-P-DBW;ctx.fillStyle='rgba(255,255,255,.15)';rr(ctx,dx,26,DBW,110,16);ctx.fill();
+  ctx.textAlign='center';ctx.fillStyle='rgba(255,255,255,.75)';ctx.font=font(600,15);ctx.fillText('DATE',dx+DBW/2,48);
+  ctx.fillStyle='#fff';ctx.font=font(700,32);ctx.fillText(fmt(date),dx+DBW/2,82);
+  ctx.font=font(500,17);ctx.fillStyle='rgba(255,255,255,.85)';ctx.fillText(dayBn(date)+' • '+dayEn(date),dx+DBW/2,114);ctx.textAlign='left';
+  // stats
+  const stats=[['মোট সদস্য',n,'#1e3a8a'],['উপস্থিত (Present)',present,'#15803d'],['অনুপস্থিত (Absent)',absent,'#b91c1c'],['উপস্থিতির হার',rate+'%','#0f766e']];
+  const sw=(IW-3*20)/4;
+  stats.forEach((s,i)=>{const x=P+i*(sw+20);ctx.save();ctx.shadowColor='rgba(15,23,42,.12)';ctx.shadowBlur=18;ctx.shadowOffsetY=6;ctx.fillStyle='#fff';rr(ctx,x,STAT_Y,sw,STAT_H,14);ctx.fill();ctx.restore();
+    ctx.fillStyle=s[2];rr(ctx,x,STAT_Y+16,5,STAT_H-32,3);ctx.fill();
+    ctx.fillStyle=s[2];ctx.font=font(700,34);ctx.fillText(String(s[1]),x+24,STAT_Y+34);
+    ctx.fillStyle='#64748b';ctx.font=font(500,16);ctx.fillText(s[0],x+24,STAT_Y+66);});
+  // table
+  ctx.save();ctx.shadowColor='rgba(15,23,42,.08)';ctx.shadowBlur=16;ctx.shadowOffsetY=4;ctx.fillStyle='#fff';rr(ctx,P,TBL_Y,IW,tblH,14);ctx.fill();ctx.restore();
+  ctx.save();rr(ctx,P,TBL_Y,IW,tblH,14);ctx.clip();
+  ctx.fillStyle='#1e293b';ctx.fillRect(P,TBL_Y,IW,THH);
+  let x=P;ctx.font=font(700,17);ctx.fillStyle='#fff';
+  cols.forEach(c=>{if(c.al==='c'){ctx.textAlign='center';ctx.fillText(c.h,x+c.w/2,TBL_Y+THH/2);}else{ctx.textAlign='left';ctx.fillText(c.h,x+PX,TBL_Y+THH/2);}x+=c.w;});
+  ctx.textAlign='left';
+  let y=TBL_Y+THH;
+  rows.forEach((r,ri)=>{
+    ctx.fillStyle=r.ab?'#fef2f2':(ri%2?'#f8fafc':'#ffffff');ctx.fillRect(P,y,IW,r.h);
+    let cx=P;
+    cols.forEach(c=>{
+      if(c.k==='status'){
+        const bw=88,bh=30,bx=cx+(c.w-bw)/2,by=y+PY+(LH-bh)/2;
+        ctx.fillStyle=r.ab?'#fee2e2':'#dcfce7';rr(ctx,bx,by,bw,bh,15);ctx.fill();
+        ctx.fillStyle=r.ab?'#b91c1c':'#15803d';ctx.font=font(700,15);ctx.textAlign='center';ctx.fillText(r.ab?'✕ Absent':'✓ Present',bx+bw/2,by+bh/2+1);ctx.textAlign='left';
+      }else{
+        r.cell[c.k].forEach((ln,li)=>{ctx.font=ln.f;ctx.fillStyle=ln.c;const ly=y+PY+li*LH+LH/2;
+          if(c.al==='c'){ctx.textAlign='center';ctx.fillText(ln.t,cx+c.w/2,ly);ctx.textAlign='left';}else ctx.fillText(ln.t,cx+PX+ln.x,ly);});
+      }
+      cx+=c.w;
+    });
+    y+=r.h;
+    ctx.fillStyle='#e2e8f0';ctx.fillRect(P,y-1,IW,1);
+  });
+  // vertical lines
+  x=P;ctx.fillStyle='#e2e8f0';cols.slice(0,-1).forEach(c=>{x+=c.w;ctx.fillRect(x,TBL_Y+THH,1,tblH-THH);});
+  ctx.restore();
+  y=TBL_Y+tblH;
+  // summary
+  if(sumText){
+    y+=28;
+    ctx.fillStyle='#eff6ff';rr(ctx,P,y,IW,sumH,14);ctx.fill();
+    ctx.fillStyle='#2563eb';rr(ctx,P,y,7,sumH,3);ctx.fill();
+    ctx.fillStyle='#1e3a8a';ctx.font=font(700,22);ctx.fillText('📌 Summary',P+28,y+22+14);
+    sumLines.forEach((ln,i)=>{ctx.font=ln.f;ctx.fillStyle=ln.c;ctx.fillText(ln.t,P+28+ln.x,y+22+36+i*(LH+1)+LH/2);});
+    y+=sumH;
+  }
+  // footer
+  y+=34;ctx.fillStyle='#cbd5e1';ctx.fillRect(P,y-8,IW,1);
+  const now=new Date();const gen=pad(now.getDate())+'/'+pad(now.getMonth()+1)+'/'+now.getFullYear()+', '+((now.getHours()%12)||12)+':'+pad(now.getMinutes())+(now.getHours()<12?' AM':' PM');
+  ctx.font=font(500,16);ctx.fillStyle='#64748b';ctx.fillText(st.by?('Submitted by: '+st.by):(st.team||''),P,y+18);
+  ctx.textAlign='right';ctx.fillText('Generated: '+gen,W-P,y+18);ctx.textAlign='left';
+  return await new Promise(res=>cv.toBlob(res,'image/png'));
+}
+
+/* ---------- WhatsApp text ---------- */
+function buildText(date){
+  const rep=getRep(date),st=S.settings;let a=0;
+  S.roster.forEach(p=>{if(entryOf(rep,p.id).status==='absent')a++;});
+  const L=['*'+(st.title||'Daily Work Report')+'*'];
+  if(st.team)L.push('_'+st.team+'_');
+  L.push('📅 *Date:* '+fmt(date)+' ('+dayBn(date)+')');
+  L.push('👥 মোট: '+S.roster.length+'  |  ✅ Present: '+(S.roster.length-a)+'  |  ❌ Absent: '+a);
+  L.push('━━━━━━━━━━━━━━');
+  S.roster.forEach((p,i)=>{const e=entryOf(rep,p.id);
+    if(e.status==='absent'){L.push('*'+(i+1)+'. '+p.name+'* (Pin: '+p.pin+') ❌ *Absent*');L.push('ℹ️ *Reason:* '+(e.reason||'-'));}
+    else{L.push('*'+(i+1)+'. '+p.name+'* (Pin: '+p.pin+') ✅');L.push('🎯 *Target:* '+(e.target||'-'));L.push('✔️ *Achieve:* '+(e.achieve||'-'));if(e.reason)L.push('ℹ️ *Reason:* '+e.reason);}
+    if(e.remarks)L.push('📝 '+e.remarks);
+    L.push('');});
+  if((rep.summary||'').trim()){L.push('━━━━━━━━━━━━━━');L.push('📌 *Summary:*');L.push(rep.summary.trim());}
+  if(st.by){L.push('');L.push('— '+st.by);}
+  return L.join('\n');
+}
+
+/* ---------- Submit / modal ---------- */
+let outBlob=null,outText='',outName='',outURL=null;
+function validate(){
+  const rep=getRep(curDate);let bad=null;
+  S.roster.forEach(p=>{const e=entryOf(rep,p.id);if(e.status==='absent'&&!(e.reason||'').trim()){const inp=document.querySelector('.emp[data-id="'+p.id+'"] [data-f=reason]');if(inp)inp.classList.add('invalid');if(!bad)bad={p,inp};}});
+  if(bad){toast(bad.p.name+' এর অনুপস্থিতির কারণ লিখুন');if(bad.inp){bad.inp.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>bad.inp.focus(),400);}return false;}
+  return true;
+}
+async function generate(fromHistory){
+  if(!S.roster.length){toast('আগে টিম মেম্বার যোগ করুন');return;}
+  if(!fromHistory&&!validate())return;
+  const btn=$('#submitBtn');const old=btn.textContent;btn.textContent='⏳ ছবি তৈরি হচ্ছে...';btn.disabled=true;
+  try{
+    if(!fromHistory){ensureRep(curDate).submitted=true;persist(true);renderStats();}
+    outBlob=await renderImage(curDate);
+    outText=buildText(curDate);outName='Daily-Report-'+fmt(curDate).replace(/\//g,'-')+'.png';
+    if(outURL)URL.revokeObjectURL(outURL);outURL=URL.createObjectURL(outBlob);
+    $('#outImg').src=outURL;$('#mWa').href='https://wa.me/?text='+encodeURIComponent(outText);
+    $('#modal').classList.add('on');
+  }catch(e){console.error(e);toast('ছবি তৈরি করা যায়নি, আবার চেষ্টা করুন');}
+  finally{btn.textContent=old;btn.disabled=false;}
+}
+$('#submitBtn').onclick=()=>generate(false);
+$('#mClose').onclick=()=>$('#modal').classList.remove('on');
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')$('#modal').classList.remove('on');});
+$('#mSave').onclick=()=>saveFile(outName,outBlob);
+async function copyImage(silent){
+  try{if(!window.ClipboardItem||!navigator.clipboard||!navigator.clipboard.write)throw 0;
+    await navigator.clipboard.write([new ClipboardItem({'image/png':outBlob})]);if(!silent)toast('✅ ছবি Copy হয়েছে — এখন WhatsApp-এ Paste করুন');return true;}
+  catch(e){if(!silent)toast('এখানে ছবি সরাসরি copy হচ্ছে না — ছবির উপর long-press / right-click করে “Copy image” চাপুন',4500);return false;}
+}
+$('#mCopy').onclick=()=>copyImage(false);
+$('#mText').onclick=async()=>{try{await navigator.clipboard.writeText(outText);toast('✅ লেখা Copy হয়েছে');}catch(e){toast('Copy করা যায়নি');}};
+$('#mWa').addEventListener('click',async e=>{
+  // Best: share the image file directly (works on phones when opened as a normal web page)
+  try{const file=new File([outBlob],outName,{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){e.preventDefault();await navigator.share({files:[file],title:S.settings.title,text:S.settings.title+' — '+fmt(curDate)});return;}
+  }catch(err){if(err&&err.name==='AbortError')return;}
+  // Fallback: put image on clipboard (paste it in chat), and open WhatsApp with the text report
+  copyImage(true).then(ok=>toast(ok?'ছবি Copy হয়েছে — WhatsApp-এ Paste করুন। লেখা রিপোর্টও সাথে খুলছে।':'WhatsApp-এ লেখা রিপোর্ট খুলছে। ছবি পাঠাতে আগে Save করুন।',4500));
+});
+
+/* ---------- init ---------- */
+bindSettings();renderReport();loadFonts();getDownloads();
+// Installable / offline when served over http(s), e.g. GitHub Pages
+try{if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}
+})();
+</script>
+</body>
+</html>
